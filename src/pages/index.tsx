@@ -1,118 +1,185 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
+import Image from "next/image";
+import { Inter } from "next/font/google";
+import React from "react";
+import { useState, useEffect, useRef, useContext } from "react";
+import AppContext from "../../utils/AppContext";
+import {
+  addUser,
+  clearAllUsers,
+  deleteUser,
+  getNumGroups,
+  getUsers,
+  setNumGroups,
+} from "../../utils/FirebaseFunctions";
+import { toast } from "react-toastify";
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] });
+
+interface Item {
+  id: string;
+  name: string;
+}
+
+interface ContextVars {
+  authUser: any;
+  setAuthUser: any;
+  numberGroups: any;
+  setNumberGroups: any;
+}
 
 export default function Home() {
+  const context: ContextVars = useContext(AppContext);
+
+  const [dbItems, setDbItems] = useState<Item[]>([]);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [submitting, setSubmitting] = useState(false);
+
+  const [myName, setMyName] = useState("");
+
+  const [bibleVerse, setBibleVerse] = useState({
+    bookname: "John",
+    chapter: "3",
+    verse: "16",
+    text: "For God so loved the world, that he gave his only Son, that whoever believes in him should not perish but have eternal life",
+  });
+
+  async function handleSubmit(event: { preventDefault: () => void }) {
+    event.preventDefault();
+    localStorage.setItem("myName", JSON.stringify(inputRef.current?.value));
+    const res = await addUser(inputRef.current?.value);
+    if (!res) {
+      toast.error(
+        "Error: Maybe you tried choosing the same name as someone else?"
+      );
+    } else {
+      toast.success("Successfully added you! Look for the highlighted box :)");
+    }
+    inputRef.current!.value = "";
+    setSubmitting(!submitting);
+  }
+
+  async function handleDelete(removeUserID: string) {
+    const res = await deleteUser(removeUserID);
+    if (!res) {
+      toast.error("Error deleting user");
+    } else {
+      toast.success("Successfully deleted user");
+    }
+    setSubmitting(!submitting);
+  }
+
+  useEffect(() => {
+    async function getAndSetItems() {
+      const tempItems: Item[] | boolean = await getUsers();
+      if (tempItems) {
+        setDbItems(tempItems);
+        console.log(dbItems);
+      }
+    }
+    async function getAndSetNumGroups() {
+      const numGroupsItem = await getNumGroups();
+      context.setNumberGroups(numGroupsItem);
+    }
+    getAndSetItems();
+    getAndSetNumGroups();
+
+    const myNameLS = localStorage.getItem("myName");
+    if (myNameLS === undefined) {
+      localStorage.setItem("myName", JSON.stringify(""));
+    }
+    if (myNameLS !== undefined && myNameLS !== null) {
+      setMyName(JSON.parse(myNameLS));
+    }
+  }, [submitting]);
+
+  useEffect(() => {
+    async function getAndSetBibleVerse() {
+      const response = await fetch(
+        "https://labs.bible.org/api/?passage=votd&type=json"
+      );
+      const verse = await response.json();
+      console.log(verse[0]);
+      setBibleVerse(verse[0]);
+    }
+    getAndSetBibleVerse();
+  }, []);
+
   return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-    >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/pages/index.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+          flexDirection: "column",
+          overflow: "auto",
+        }}
+      >
+        <div className="my-5 text-center mx-7">
+          <div className=" text-2xl">Verse of the day 😎</div>
+          {/* eslint-disable-next-line */}
+          <div className="text-lg">"{bibleVerse.text}"</div>
+          <div className="text-lg">
+            {bibleVerse.bookname} {bibleVerse.chapter}:{bibleVerse.verse}
+          </div>
+        </div>
+        {context.authUser && <div className="text-red-500">auth mode</div>}
+        <div
+          style={{ fontSize: "150%", paddingBottom: "3vh" }}
+          className="mx-7 text-center"
+        >
+          Enter your FIRST AND LAST name to be assigned to a group!
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
           >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+            <input ref={inputRef} />
+            <div style={{ padding: "1vh" }}></div>
+            <button className="text-md flex rounded-full border-2 border-[#89CFF0] bg-[#89CFF0] px-4 py-[3px] text-white items-center font-light hover:border-transparent duration-300 hover:bg-[#89CFF0]">
+              Submit
+            </button>
+          </div>
+        </form>
+        <div className="mt-10 space-y-2">
+          <div className="grid grid-cols-2 gap-3">
+            {dbItems.length > 0 &&
+              dbItems.map((itemData, idx) => (
+                <div
+                  key={itemData.id}
+                  className={`flex flex-col border border-black p-2 rounded-md ${
+                    myName === itemData.name && "bg-[#89CFF0]"
+                  }`}
+                >
+                  <div className="flex flex-col">
+                    <div>
+                      <span className="font-bold mb-2">
+                        {(idx % Number(context.numberGroups)) + 1}
+                      </span>{" "}
+                      <span>{itemData.name}</span>
+                    </div>
+                    {(context.authUser || myName === itemData.name) && (
+                      <button
+                        className=" text-red-500 ml-3"
+                        onClick={() => handleDelete(itemData.id)}
+                      >
+                        delete
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+          </div>
         </div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    </div>
+  );
 }

@@ -73,7 +73,7 @@ export default function Home() {
   useEffect(() => {
     async function getAndSetItems() {
       const tempItems: Item[] | boolean = await getUsers();
-      if (tempItems) {
+      if (Array.isArray(tempItems)) {
         setDbItems(tempItems);
         console.log(dbItems);
       }

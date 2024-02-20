@@ -86,7 +86,9 @@ export default function Navbar() {
         </div>
         {/* When window is small */}
         <Box className="flex flex-row justify-between sm:hidden ">
-          <Image src={logo} className="h-[8vh] w-auto" alt="logo"></Image>
+          <div className="bg-white rounded-lg">
+            <Image src={logo} className="h-[8vh] w-auto" alt="logo"></Image>
+          </div>
 
           <IconButton
             size="large"

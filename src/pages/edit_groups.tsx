@@ -39,7 +39,7 @@ export default function Edit_Groups() {
     "Nice try bud, better luck next time",
     "Trying to access something you're not supposed to? 🤨",
     "The password is: YeahThatsNotHappening123 :)",
-    "You have a better chance of finding a signficant other than guessing this password. Oh wait, both are ~zero probability",
+    // "You have a better chance of finding a signficant other than guessing this password. Oh wait, both are ~zero probability",
   ];
 
   async function handleAuthAttempt(event: { preventDefault: () => void }) {

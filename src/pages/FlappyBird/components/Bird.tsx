@@ -1,7 +1,10 @@
-// Bird.js
 import React from "react";
 
-const Bird = ({ birdPosition }) => {
+interface Props {
+  birdPosition: { x: number; y: number };
+}
+
+const Bird: React.FC<Props> = ({ birdPosition }) => {
   return (
     <img
       src={

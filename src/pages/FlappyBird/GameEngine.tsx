@@ -2,7 +2,31 @@ import React, { useState, useEffect } from "react";
 import Bird from "./components/Bird";
 import Pipes from "./components/Pipes";
 
-const GameEngine = ({
+interface Position {
+  x: number;
+  y: number;
+}
+
+interface Pipe {
+  x: number;
+  y: number;
+  passed: boolean;
+}
+
+interface Props {
+  birdPosition: Position;
+  pipes: Pipe[];
+  gameOver: boolean;
+  score: number;
+  gameStarted: boolean;
+  setBirdPosition: React.Dispatch<React.SetStateAction<Position>>;
+  setPipes: React.Dispatch<React.SetStateAction<Pipe[]>>;
+  setGameOver: React.Dispatch<React.SetStateAction<boolean>>;
+  setScore: React.Dispatch<React.SetStateAction<number>>;
+  setGameStarted: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const GameEngine: React.FC<Props> = ({
   birdPosition,
   pipes,
   gameOver,
@@ -16,17 +40,13 @@ const GameEngine = ({
 }) => {
   const jump = () => {
     if (!gameOver && gameStarted) {
-      // For smoother jumping animation
       const jumpInterval = setInterval(() => {
         setBirdPosition((prev) => ({ ...prev, y: prev.y - 12.5 }));
       }, 20);
       setTimeout(() => clearInterval(jumpInterval), 100);
-      // setBirdPosition((prev) => ({ ...prev, y: prev.y - 60 }));
     } else if (!gameOver && !gameStarted) {
-      // Start the game on the first jump
       setGameStarted(true);
     } else {
-      // Restart the game
       setBirdPosition({ x: 50, y: 200 });
       setPipes([]);
       setGameOver(false);
@@ -56,7 +76,6 @@ const GameEngine = ({
         birdTop < pipeBottom;
 
       if (isColliding) {
-        // Bird has hit the pipe, end the game
         setGameOver(true);
         setGameStarted(false);
       } else if (!pipe.passed && birdLeft > pipeLeft) {
@@ -69,9 +88,7 @@ const GameEngine = ({
       }
     });
 
-    // Check if bird is out of the screen vertically
     if (birdBottom > 800 || birdTop < -170) {
-      // Bird is out of bounds, end the game
       setGameOver(true);
       setGameStarted(false);
     }

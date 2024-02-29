@@ -21,7 +21,7 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "src/pages/FlappyBird/FlappyApp.jsx"
+    "src/pages/FlappyBird/FlappyApp.tsx"
   ],
   "exclude": ["node_modules"]
 }

@@ -1,8 +1,10 @@
-// Pipes.js
-
 import React from "react";
 
-const Pipes = ({ pipePosition }) => {
+interface Props {
+  pipePosition: { x: number; y: number };
+}
+
+const Pipes: React.FC<Props> = ({ pipePosition }) => {
   return (
     <img
       src={

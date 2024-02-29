@@ -120,7 +120,7 @@ export default function Edit_Groups() {
 
   if (context.authUser) {
     return (
-      <div className="flex justify-center items-center h-full flex-col">
+      <div className="flex justify-center items-center h-full flex-col mb-20">
         <div
           style={{ fontSize: "150%", paddingBottom: "3vh" }}
           className="pt-5"

@@ -27,7 +27,7 @@ export default function App({ Component, pageProps }: AppProps) {
       }}
     >
       <Navbar />
-      <main className="pb-20">
+      <main className="">
         <Component {...pageProps} />
       </main>
       <ToastContainer

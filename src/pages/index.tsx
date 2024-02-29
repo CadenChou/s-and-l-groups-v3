@@ -133,7 +133,7 @@ export default function Home() {
   }
 
   return (
-    <div>
+    <div className="mb-20">
       <div
         style={{
           display: "flex",

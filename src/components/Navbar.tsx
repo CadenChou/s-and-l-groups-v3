@@ -25,6 +25,10 @@ const pages = [
     name: "Auth Mode",
     link: "/edit_groups",
   },
+  {
+    name: "Flappy bird",
+    link: "/FlappyBird/FlappyApp",
+  },
 ];
 
 export default function Navbar() {

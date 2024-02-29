@@ -266,9 +266,9 @@ export default function Home() {
                           </span>
                         </div>
                         <div
-                          className={`flex flex-col border border-black p-2 rounded-md`}
+                          className={`flex flex-col border border-black p-2 rounded-md bg-[#89CFF0]`}
                         >
-                          <div className="flex flex-col items-center bg-[#89CFF0]">
+                          <div className="flex flex-col items-center ">
                             <div className="font-bold">Your name:</div>
                             <div className="font-bold pb-2">
                               {itemData.name}

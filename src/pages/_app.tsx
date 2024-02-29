@@ -11,13 +11,9 @@ import "react-toastify/dist/ReactToastify.css";
 export default function App({ Component, pageProps }: AppProps) {
   const [authUser, setAuthUser] = React.useState<boolean>(false);
   const [numberGroups, setNumberGroups] = React.useState<string>("5");
-
-  const contextVars = {
-    authUser,
-    setAuthUser,
-    numberGroups,
-    setNumberGroups,
-  };
+  const [groupLeaders, setGroupLeaders] = useState<{ [key: number]: string }>(
+    {}
+  );
 
   return (
     <AppContext.Provider
@@ -26,6 +22,8 @@ export default function App({ Component, pageProps }: AppProps) {
         setAuthUser,
         numberGroups,
         setNumberGroups,
+        groupLeaders,
+        setGroupLeaders,
       }}
     >
       <Navbar />

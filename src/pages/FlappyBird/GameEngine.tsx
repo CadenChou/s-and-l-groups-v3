@@ -79,10 +79,12 @@ const GameEngine: React.FC<Props> = ({
         setGameOver(true);
         setGameStarted(false);
       } else if (!pipe.passed && birdLeft > pipeLeft) {
-        setPipes((prevPipes) =>
-          prevPipes.map((prevPipe) =>
-            prevPipe === pipe ? { ...prevPipe, passed: true } : prevPipe
-          )
+        setPipes(
+          (prevPipes) =>
+            prevPipes &&
+            prevPipes.map((prevPipe) =>
+              prevPipe === pipe ? { ...prevPipe, passed: true } : prevPipe
+            )
         );
         setScore((prevScore) => prevScore + 1);
       }
@@ -106,16 +108,21 @@ const GameEngine: React.FC<Props> = ({
 
     const pipeGenerator = setInterval(() => {
       if (!gameOver && gameStarted) {
-        setPipes((prev) => [
-          ...prev,
-          { x: 400, y: Math.floor(Math.random() * 500), passed: false },
-        ]);
+        setPipes(
+          (prev) =>
+            prev && [
+              ...prev,
+              { x: 400, y: Math.floor(Math.random() * 500), passed: false },
+            ]
+        );
       }
     }, 2000);
 
     const pipeMove = setInterval(() => {
       if (!gameOver && gameStarted) {
-        setPipes((prev) => prev.map((pipe) => ({ ...pipe, x: pipe.x - 2.5 })));
+        setPipes(
+          (prev) => prev && prev.map((pipe) => ({ ...pipe, x: pipe.x - 2.5 }))
+        );
       }
     }, 15);
 
@@ -131,9 +138,8 @@ const GameEngine: React.FC<Props> = ({
       <div className={`App ${gameOver ? "game-over" : ""}`} onClick={jump}>
         <div>score: {score}</div>
         <Bird birdPosition={birdPosition} />
-        {pipes.map((pipe, index) => (
-          <Pipes key={index} pipePosition={pipe} />
-        ))}
+        {pipes &&
+          pipes.map((pipe, index) => <Pipes key={index} pipePosition={pipe} />)}
       </div>
     </div>
   );

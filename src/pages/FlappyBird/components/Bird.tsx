@@ -5,6 +5,9 @@ interface Props {
 }
 
 const Bird: React.FC<Props> = ({ birdPosition }) => {
+  if (!birdPosition) {
+    return null;
+  }
   return (
     <img
       src={

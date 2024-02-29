@@ -5,6 +5,9 @@ interface Props {
 }
 
 const Pipes: React.FC<Props> = ({ pipePosition }) => {
+  if (!pipePosition) {
+    return null;
+  }
   return (
     <img
       src={

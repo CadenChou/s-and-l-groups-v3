@@ -2,52 +2,38 @@ import React, { useEffect, useRef, useState } from "react";
 import AppContext from "../../utils/AppContext";
 import { useContext } from "react";
 import {
+  addLeaders,
+  clearAllLeaders,
   clearAllUsers,
-  getGroups,
+  getLeaders,
   getNumGroups,
   setNumGroups,
   verifyPassword,
-  addLeaders,
-  clearAllLeaders,
-  initializeGroups,
 } from "../../utils/FirebaseFunctions";
 import { useRouter } from "next/router";
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogTitle,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-} from "@mui/material";
-import { SelectChangeEvent } from "@mui/material/Select";
-import { toast } from "react-toastify";
 
-interface Group {
-  id: string;
-  groupNumber: number;
-  leader: string;
-  users: Array<{ id: string; name: string }>;
-}
+import Box from "@mui/material/Box";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import Select, { SelectChangeEvent } from "@mui/material/Select";
+import { toast } from "react-toastify";
+import { Button, Dialog, DialogActions, DialogTitle } from "@mui/material";
 
 interface ContextVars {
-  authUser: boolean;
-  setAuthUser: (auth: boolean) => void;
-  numberGroups: string;
-  setNumberGroups: (num: string) => void;
+  authUser: any;
+  setAuthUser: any;
+  numberGroups: string; // Change to string
+  setNumberGroups: any;
+  groupLeaders: { [key: string]: string }; // Change to string
+  setGroupLeaders: any;
 }
 
 export default function Edit_Groups() {
   const groupValues = [2, 3, 4, 5, 6, 7, 8, 9, 10];
+
   const router = useRouter();
   const context: ContextVars = useContext(AppContext);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [groupLeaders, setGroupLeaders] = useState<{ [key: string]: string }>(
-    {}
-  );
 
   const passwordRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -58,6 +44,7 @@ export default function Edit_Groups() {
     "Nice try bud, better luck next time",
     "Trying to access something you're not supposed to? 🤨",
     "The password is: YeahThatsNotHappening123 :)",
+    // "You have a better chance of finding a signficant other than guessing this password. Oh wait, both are ~zero probability",
   ];
 
   async function handleAuthAttempt(event: { preventDefault: () => void }) {
@@ -76,7 +63,7 @@ export default function Edit_Groups() {
   async function handleDeleteAll() {
     const res = await clearAllUsers();
     if (!res) {
-      toast.error("Error deleting all users");
+      toast.error("Error delelting all users");
     } else {
       toast.success("Successfully cleared all users");
     }
@@ -85,21 +72,41 @@ export default function Edit_Groups() {
   }
 
   const handleChange = async (event: SelectChangeEvent) => {
-    const newNumGroups = event.target.value;
-    context.setNumberGroups(newNumGroups);
-    const res = await setNumGroups(newNumGroups);
-    if (!res) {
-      toast.error("Error setting number of groups");
-    }
-    setSubmitting(!submitting);
+    context.setNumberGroups(event.target.value as string);
+    // This is for the database
+    const res = await setNumGroups(event.target.value);
+    // if (!res) {
+    //   toast.error("Error setting number of groups");
+    // } else {
+    //   toast.success("Successfully changed number of groups!");
+    // }
   };
+
+  useEffect(() => {
+    // Fetch group leaders when the component mounts
+    fetchGroupLeaders();
+  }, []);
+
+  async function fetchGroupLeaders() {
+    try {
+      const leaders = await getLeaders(); // Fetch group leaders
+      context.setGroupLeaders(leaders); // Update context variable
+    } catch (error) {
+      console.log("Error fetching group leaders:", error);
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
-      await addLeaders(groupLeaders);
+      // Filter out undefined values from groupLeaders
+      const validGroupLeaders = Object.fromEntries(
+        Object.entries(context.groupLeaders).filter(
+          ([_, value]) => value !== undefined
+        )
+      );
+      await addLeaders(validGroupLeaders); // Call addLeaders with filtered groupLeaders
       toast.success("Group leaders updated successfully!");
-      setSubmitting(!submitting);
     } catch (error) {
       console.log("Error updating group leaders:", error);
       toast.error("Failed to update group leaders");
@@ -108,58 +115,36 @@ export default function Edit_Groups() {
 
   async function handleClearLeaders() {
     const res = await clearAllLeaders();
-    if (res) {
-      setGroupLeaders({});
-      setSubmitting(!submitting);
-      toast.success("Successfully cleared all leaders");
-    } else {
-      toast.error("Error clearing leaders");
-    }
+    context.setGroupLeaders({});
   }
-
-  useEffect(() => {
-    async function fetchData() {
-      const fetchedGroups = await getGroups();
-      setGroups(fetchedGroups);
-
-      // Initialize groupLeaders state from fetched groups
-      const leaders: { [key: string]: string } = {};
-      fetchedGroups.forEach((group) => {
-        leaders[group.groupNumber] = group.leader || "";
-      });
-      setGroupLeaders(leaders);
-
-      const numGroups = await getNumGroups();
-      context.setNumberGroups(numGroups || "5");
-    }
-    fetchData();
-  }, [submitting]);
 
   if (context.authUser) {
     return (
       <div className="flex justify-center items-center h-full flex-col mb-20">
-        <div className="text-2xl pt-5 pb-8">You are in auth mode</div>
+        <div
+          style={{ fontSize: "150%", paddingBottom: "3vh" }}
+          className="pt-5"
+        >
+          You are in auth mode
+        </div>
         <button
-          className="text-md rounded-full border-2 border-[#89CFF0] bg-[#89CFF0] px-4 py-1 text-white hover:border-transparent duration-300"
+          className="text-md flex rounded-full border-2 border-[#89CFF0] bg-[#89CFF0] px-4 py-[3px] text-white items-center font-light hover:border-transparent duration-300 hover:bg-[#89CFF0]"
           onClick={() => context.setAuthUser(false)}
         >
           click to exit auth mode
         </button>
-
         <div className="my-8 flex flex-col items-center">
           <div className="my-5 font-semibold text-xl">auth mode features</div>
-
           <button
-            className="text-md rounded-full border-2 border-red-500 bg-red-500 px-4 py-1 text-white hover:border-transparent duration-300"
+            className="text-md flex rounded-full border-2 border-red-500 bg-red-500 px-4 py-[3px] text-white items-center font-light hover:border-transparent duration-300 hover:red-500"
             onClick={() => setShowDeleteConfirmation(true)}
           >
             delete all names
           </button>
-
-          <div className="font-semibold text-lg pt-8 pb-4">
+          <div className="font-semibold text-lg pt-5">
             Select number of groups
           </div>
-          <Box sx={{ minWidth: 150 }}>
+          <Box className="mt-5" sx={{ minWidth: 150 }}>
             <FormControl fullWidth>
               <InputLabel>Groups</InputLabel>
               <Select
@@ -167,36 +152,39 @@ export default function Edit_Groups() {
                 label="Groups"
                 onChange={handleChange}
               >
-                {groupValues.map((value) => (
-                  <MenuItem key={value} value={value.toString()}>
-                    {value}
-                  </MenuItem>
-                ))}
+                {groupValues.map((value, idx) => {
+                  return (
+                    <MenuItem key={idx} value={value}>
+                      {value}
+                    </MenuItem>
+                  );
+                })}
               </Select>
             </FormControl>
           </Box>
         </div>
-
-        <div className="text-lg font-semibold pb-5">
+        <div className=" text-lg font-semibold pb-5">
           Leaders, please input your names
         </div>
         <form
           className="flex flex-col items-center space-y-5 mb-7"
           onSubmit={handleSubmit}
         >
+          {/* Render text inputs for each group */}
           {Array.from(
             { length: parseInt(context.numberGroups, 10) },
             (_, idx) => idx + 1
-          ).map((groupNum) => (
-            <div key={groupNum} className="flex items-center space-x-2">
-              <label>{`Group ${groupNum} Leader:`}</label>
+          ).map((groupNum, idx) => (
+            <div key={idx}>
+              <label>{`Group ${groupNum} Leader: `}</label>
               <input
                 type="text"
-                className="border rounded px-2 py-1"
-                value={groupLeaders[groupNum] || ""}
+                className="pl-1 rounded-md"
+                value={context.groupLeaders[groupNum] || ""} // Autofill with group leader
                 onChange={(e) => {
-                  setGroupLeaders((prev) => ({
-                    ...prev,
+                  // Update group leaders in context
+                  context.setGroupLeaders((prevState: any) => ({
+                    ...prevState,
                     [groupNum]: e.target.value,
                   }));
                 }}
@@ -204,20 +192,19 @@ export default function Edit_Groups() {
             </div>
           ))}
           <button
+            className=" justify-center w-20 text-md flex rounded-full border-2 border-[#89CFF0] bg-[#89CFF0] px-4 py-[3px] text-white items-center font-light hover:border-transparent duration-300 hover:bg-[#89CFF0]"
             type="submit"
-            className="text-md rounded-full border-2 border-[#89CFF0] bg-[#89CFF0] px-4 py-1 text-white hover:border-transparent duration-300"
           >
             Submit
           </button>
         </form>
-
         <button
-          className="text-md rounded-full border-2 border-red-500 bg-red-500 px-4 py-1 text-white hover:border-transparent duration-300"
+          className="text-md flex rounded-full border-2 border-red-500 bg-red-500 px-4 py-[3px] text-white items-center font-light hover:border-transparent duration-300 hover:red-500"
           onClick={handleClearLeaders}
         >
-          clear all leaders
+          clear all leaders fields
         </button>
-
+        {/* Delete Confirmation Dialog */}
         <Dialog
           open={showDeleteConfirmation}
           onClose={() => setShowDeleteConfirmation(false)}
@@ -238,23 +225,26 @@ export default function Edit_Groups() {
       </div>
     );
   }
-
   return (
     <div className="flex justify-center items-center h-[100vh] flex-col">
-      <div className="text-2xl pb-8 mx-7 text-center">
+      <div
+        style={{ fontSize: "150%", paddingBottom: "3vh" }}
+        className="mx-7 text-center"
+      >
         Input password to gain superpowers 👀
       </div>
       <form onSubmit={handleAuthAttempt}>
-        <div className="flex flex-col items-center">
-          <input
-            ref={passwordRef}
-            type="password"
-            className="border rounded px-2 py-1"
-          />
-          <button
-            type="submit"
-            className="mt-4 text-md rounded-full border-2 border-[#89CFF0] bg-[#89CFF0] px-4 py-1 text-white hover:border-transparent duration-300"
-          >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <input ref={passwordRef} />
+          <div style={{ padding: "1vh" }}></div>
+          <button className="text-md flex rounded-full border-2 border-[#89CFF0] bg-[#89CFF0] px-4 py-[3px] text-white items-center font-light hover:border-transparent duration-300 hover:bg-[#89CFF0]">
             Submit
           </button>
         </div>

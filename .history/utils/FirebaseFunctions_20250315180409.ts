@@ -18,27 +18,15 @@ import { app } from "./FirebaseConfig";
 
 const firestore = getFirestore(app);
 
-interface User {
-  id: string;
-  name: string;
-}
-
-interface Group {
-  id: string;
-  groupNumber: number;
-  leader: string;
-  users: User[];
-}
-
 // Function to get all groups
-export async function getGroups(): Promise<Group[]> {
+export async function getGroups() {
   try {
     const groupsCol = collection(firestore, "groups");
     const groupsSnapshot = await getDocs(groupsCol);
     const groups = groupsSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    })) as Group[];
+    }));
     return groups.sort((a, b) => a.groupNumber - b.groupNumber);
   } catch (e) {
     console.log("Error getting groups:", e);
@@ -74,31 +62,18 @@ export async function initializeGroups(
 
     // Create new groups
     const usersArray = Array.from(existingUsers.values());
-    const totalUsers = usersArray.length;
-
-    // Calculate base number of users per group and remainder
-    const baseUsersPerGroup = Math.floor(totalUsers / numGroups);
-    const extraUsers = totalUsers % numGroups;
-
-    let currentUserIndex = 0;
+    const usersPerGroup = Math.ceil(usersArray.length / numGroups);
 
     for (let i = 1; i <= numGroups; i++) {
-      // Calculate how many users this group should have
-      // Add one extra user to the first 'extraUsers' groups to distribute remainder
-      const usersInThisGroup = baseUsersPerGroup + (i <= extraUsers ? 1 : 0);
-
-      const groupUsers = usersArray.slice(
-        currentUserIndex,
-        currentUserIndex + usersInThisGroup
-      );
+      const startIdx = (i - 1) * usersPerGroup;
+      const endIdx = Math.min(startIdx + usersPerGroup, usersArray.length);
+      const groupUsers = usersArray.slice(startIdx, endIdx);
 
       await addDoc(groupsCol, {
         groupNumber: i,
         leader: leaders[i] || "",
         users: groupUsers,
       });
-
-      currentUserIndex += usersInThisGroup;
     }
 
     return true;

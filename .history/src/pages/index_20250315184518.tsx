@@ -8,6 +8,7 @@ import {
   deleteUser,
   getGroups,
   getNumGroups,
+  getViewMode,
 } from "../../utils/FirebaseFunctions";
 import { toast } from "react-toastify";
 import { Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
@@ -36,6 +37,7 @@ interface ContextVars {
 export default function Home() {
   const context: ContextVars = useContext(AppContext);
   const [groups, setGroups] = useState<Group[]>([]);
+  const [isExpandedView, setIsExpandedView] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [myName, setMyName] = useState("");
@@ -88,6 +90,10 @@ export default function Home() {
       if (myNameLS !== undefined && myNameLS !== null) {
         setMyName(JSON.parse(myNameLS));
       }
+
+      // Get view mode setting
+      const viewMode = await getViewMode();
+      setIsExpandedView(viewMode);
     }
     fetchData();
   }, [submitting]);
@@ -172,8 +178,8 @@ export default function Home() {
         </form>
 
         <div className="mt-10 w-full max-w-4xl px-4">
-          {context.authUser ? (
-            // Admin view - show all groups or filtered group
+          {context.authUser || isExpandedView ? (
+            // Admin view or expanded user view - show all groups or filtered group
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {groups
                 .filter(
@@ -201,12 +207,14 @@ export default function Home() {
                         >
                           <div className="flex justify-between items-center">
                             <span>{user.name}</span>
-                            <button
-                              className="text-red-500 hover:text-red-700"
-                              onClick={() => handleDelete(user.id)}
-                            >
-                              delete
-                            </button>
+                            {context.authUser && (
+                              <button
+                                className="text-red-500 hover:text-red-700"
+                                onClick={() => handleDelete(user.id)}
+                              >
+                                delete
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -215,7 +223,7 @@ export default function Home() {
                 ))}
             </div>
           ) : (
-            // User view - show only their group
+            // Compact user view - show only their group
             userGroup && (
               <div className="flex flex-col items-center space-y-6">
                 <div className="text-xl font-bold">Your Group Information</div>

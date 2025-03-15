@@ -284,3 +284,25 @@ export async function verifyPassword(password: string) {
     return false;
   }
 }
+
+export async function setViewMode(isExpandedView: boolean) {
+  try {
+    const viewModeDoc = doc(firestore, "misc", "viewModeDoc");
+    await setDoc(viewModeDoc, { isExpandedView });
+    return true;
+  } catch (e) {
+    console.log("Error setting view mode:", e);
+    return false;
+  }
+}
+
+export async function getViewMode() {
+  try {
+    const viewModeDoc = doc(firestore, "misc", "viewModeDoc");
+    const viewModeSnapshot = await getDoc(viewModeDoc);
+    return viewModeSnapshot.data()?.isExpandedView ?? false;
+  } catch (e) {
+    console.log("Error getting view mode:", e);
+    return false;
+  }
+}

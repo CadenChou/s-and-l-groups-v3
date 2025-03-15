@@ -12,19 +12,13 @@ import {
   initializeGroups,
 } from "../../utils/FirebaseFunctions";
 import { useRouter } from "next/router";
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogTitle,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-} from "@mui/material";
-import { SelectChangeEvent } from "@mui/material/Select";
+import Box from "@mui/material/Box";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { toast } from "react-toastify";
+import { Button, Dialog, DialogActions, DialogTitle } from "@mui/material";
 
 interface Group {
   id: string;
@@ -148,7 +142,6 @@ export default function Edit_Groups() {
 
         <div className="my-8 flex flex-col items-center">
           <div className="my-5 font-semibold text-xl">auth mode features</div>
-
           <button
             className="text-md rounded-full border-2 border-red-500 bg-red-500 px-4 py-1 text-white hover:border-transparent duration-300"
             onClick={() => setShowDeleteConfirmation(true)}

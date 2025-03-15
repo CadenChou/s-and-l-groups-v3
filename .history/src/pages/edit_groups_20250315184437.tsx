@@ -10,21 +10,24 @@ import {
   addLeaders,
   clearAllLeaders,
   initializeGroups,
+  setViewMode,
+  getViewMode,
 } from "../../utils/FirebaseFunctions";
 import { useRouter } from "next/router";
+import Box from "@mui/material/Box";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import Select, { SelectChangeEvent } from "@mui/material/Select";
+import { toast } from "react-toastify";
 import {
-  Box,
   Button,
   Dialog,
   DialogActions,
   DialogTitle,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
-import { SelectChangeEvent } from "@mui/material/Select";
-import { toast } from "react-toastify";
 
 interface Group {
   id: string;
@@ -48,6 +51,7 @@ export default function Edit_Groups() {
   const [groupLeaders, setGroupLeaders] = useState<{ [key: string]: string }>(
     {}
   );
+  const [isExpandedView, setIsExpandedView] = useState(false);
 
   const passwordRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -117,6 +121,21 @@ export default function Edit_Groups() {
     }
   }
 
+  const handleViewModeChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const newValue = event.target.checked;
+    setIsExpandedView(newValue);
+    const res = await setViewMode(newValue);
+    if (!res) {
+      toast.error("Error updating view mode");
+    } else {
+      toast.success(
+        `View mode updated to ${newValue ? "expanded" : "compact"}`
+      );
+    }
+  };
+
   useEffect(() => {
     async function fetchData() {
       const fetchedGroups = await getGroups();
@@ -131,6 +150,10 @@ export default function Edit_Groups() {
 
       const numGroups = await getNumGroups();
       context.setNumberGroups(numGroups || "5");
+
+      // Get view mode
+      const viewMode = await getViewMode();
+      setIsExpandedView(viewMode);
     }
     fetchData();
   }, [submitting]);
@@ -148,6 +171,23 @@ export default function Edit_Groups() {
 
         <div className="my-8 flex flex-col items-center">
           <div className="my-5 font-semibold text-xl">auth mode features</div>
+
+          <div className="mb-4">
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={isExpandedView}
+                  onChange={handleViewModeChange}
+                  color="primary"
+                />
+              }
+              label={`User View: ${
+                isExpandedView
+                  ? "Expanded (Show All Groups)"
+                  : "Compact (Show Own Group)"
+              }`}
+            />
+          </div>
 
           <button
             className="text-md rounded-full border-2 border-red-500 bg-red-500 px-4 py-1 text-white hover:border-transparent duration-300"
